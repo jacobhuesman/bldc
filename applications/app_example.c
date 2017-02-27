@@ -4,8 +4,10 @@
 #include "hw.h" // Pin mapping on this hardware
 #include "timeout.h" // To reset the timeout
 
+#include "commands.h"
 #include "comm_can.h"
 #include "app.h"
+#include "hw.h"
  
 // Example thread
 static THD_FUNCTION(example_thread, arg);
@@ -37,8 +39,11 @@ static THD_FUNCTION(example_thread, arg) {
 		status1.position = (int) (mc_interface_get_pid_pos_now()*1000);
 		status1.motorCurrent = (int) (mc_interface_get_tot_current()*10);
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS1 << 8), (uint8_t*) &status1, sizeof(VESC_status1));
+
+		//commands_printf("%u\t%f\t%f", (ADC_Value[9]), 3.3* ADC_Value[11]/4095.0 , NTC_TEMP(ADC_IND_TEMP_PCB));
+		commands_printf("%f\t%f\t%f", 3.3* ADC_Value[11]/4095.0, NTC_TEMP_GND(ADC_IND_TEMP_MOTOR) , NTC_TEMP(ADC_IND_TEMP_PCB));
 		// Run this loop at 100Hz
-		chThdSleepMilliseconds(10);
+		chThdSleepMilliseconds(100);
  
 		// Reset the timeout
 		//timeout_reset();

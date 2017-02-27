@@ -13,6 +13,8 @@ wanted features
 	controller temp
 	configurabiltity
 
+all the mosfet temperatures is actually the PCB temperature, there is only one temperature sensor on the board
+
 http://vedder.se/2015/08/vesc-writing-custom-applications/
 	mcpwm.h conatins all the stuff that can be read from the motor
 	actually use mc_interface.h, it is newer
