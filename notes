@@ -74,6 +74,8 @@ Position control?
 	can turn continuously, but will have to manually command motor through angles
 	http://vedder.se/forums/viewtopic.php?f=8&t=440
 
+release motor just sets the motor current to zero
+
 Talon srx structs
 /* encoder/decoders */
 /** control */
