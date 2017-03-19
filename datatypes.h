@@ -82,7 +82,9 @@ typedef enum {
 	CONTROL_MODE_CURRENT,
 	CONTROL_MODE_CURRENT_BRAKE,
 	CONTROL_MODE_POS,
-	CONTROL_MODE_NONE
+	CONTROL_MODE_NONE,
+
+	CONTROL_MODE_CUSTOM,
 } mc_control_mode;
 
 typedef enum {
@@ -434,8 +436,19 @@ typedef enum {
 	CAN_PACKET_STATUS1,
 	CAN_PACKET_STATUS2,
 	CAN_PACKET_STATUS3,
-	CAN_PACKET_STATUS4
+	CAN_PACKET_STATUS4,
+
+	CAN_PACKET_CONFIG,
+	CAN_PACKET_CONTROL
 } CAN_PACKET_ID;
+
+typedef struct custom_control_data {
+	union {
+		float setpointf;
+		int setpointi;
+	};
+	unsigned control_mode:4;
+} custom_control_data;
 
 // Logged fault data
 typedef struct {
