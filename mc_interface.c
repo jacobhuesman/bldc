@@ -40,6 +40,8 @@
 volatile uint16_t ADC_Value[HW_ADC_CHANNELS];
 volatile int ADC_curr_norm_value[3];
 
+float custom_setpoint;
+
 // Private variables
 static volatile mc_configuration m_conf;
 static mc_fault_code m_fault_now;
