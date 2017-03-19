@@ -22,6 +22,9 @@ static THD_WORKING_AREA(can_status3_wa, 2048); // 2kb stack for this thread
 static THD_FUNCTION(can_status4, arg);
 static THD_WORKING_AREA(can_status4_wa, 2048); // 2kb stack for this thread
 
+static THD_FUNCTION(custom_control, arg);
+static THD_WORKING_AREA(custom_control_wa, 2048); // 2kb stack for this thread
+
 void app_can_status_init(void) {
 	// Set the UART TX pin as an input with pulldown
 	//palSetPadMode(HW_UART_TX_PORT, HW_UART_TX_PIN, PAL_MODE_INPUT_PULLDOWN);
@@ -35,6 +38,9 @@ void app_can_status_init(void) {
 		NORMALPRIO, can_status3, NULL);
 	chThdCreateStatic(can_status4_wa, sizeof(can_status4_wa),
 		NORMALPRIO, can_status4, NULL);
+
+	chThdCreateStatic(custom_control_wa, sizeof(custom_control_wa),
+		NORMALPRIO, custom_control, NULL);
 }
  
 // most updated 100hz
@@ -50,11 +56,12 @@ typedef struct VESC_status2 { // 32bits
 } VESC_status2;
 
 // even less updated 10hz
-typedef struct VESC_status3 { // 42bits
-	int wattHours:32;
+typedef struct VESC_status3 { // 60bits
+	float wattHours;
+	int inCurrent:16;
 	unsigned voltage:12;
 } VESC_status3;
-typedef struct VESC_status4 { // 25bits
+typedef struct VESC_status4 { // 29bits
 	unsigned tempMotor:12;
 	unsigned tempPCB:12;
 	unsigned faultCode:3;
@@ -68,7 +75,7 @@ static THD_FUNCTION(can_status1, arg) {
  
 	for(;;) {
 		VESC_status1 status1;
-		status1.rpm = (int) mc_interface_get_rpm();
+		status1.rpm = mc_interface_get_rpm();
 		status1.position = (int) (mc_interface_get_pid_pos_now()*1000);
 		status1.motorCurrent = (int) (mc_interface_get_tot_current()*10);
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS1 << 8), (uint8_t*) &status1, sizeof(VESC_status1));
@@ -96,7 +103,8 @@ static THD_FUNCTION(can_status3, arg) {
 	chRegSetThreadName("CAN_STATUS3");
 	for(;;) {
 		VESC_status3 status3;
-		status3.wattHours = mc_interface_get_watt_hours(false) * 1000;
+		status3.wattHours = mc_interface_get_watt_hours(false);
+		status3.inCurrent = mc_interface_get_tot_current_in() * 100;
 		status3.voltage = ADC_Value[ADC_IND_VIN_SENS];
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS3 << 8), (uint8_t*) &status3, sizeof(VESC_status3));
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
@@ -113,6 +121,16 @@ static THD_FUNCTION(can_status4, arg) {
 		status4.faultCode = mc_interface_get_fault();
 		status4.state = mc_interface_get_state();
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS4 << 8), (uint8_t*) &status4, sizeof(VESC_status4));
+		chThdSleepMilliseconds(100); // Run this loop at 10Hz
+	}
+}
+
+static THD_FUNCTION(custom_control, arg) {
+	(void)arg;
+	chRegSetThreadName("CUSTOM_CONTROL");
+	for(;;) {
+
+		commands_printf("%f", custom_setpoint);
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
 	}
 }
