@@ -50,6 +50,7 @@ add another CAN_PACKET_ID enum for custom setpoint
 		control the current with mc_interface_set_current
 
 There is some sort of integral windup mitigation
+	unsure of effectiveness, it seems hardcoded, look at this more
 
 m_id_set and m_iq_set controls the motor current
 	eventually, it goes through a bunch of other variables and calculations first
@@ -75,6 +76,8 @@ Position control?
 	http://vedder.se/forums/viewtopic.php?f=8&t=440
 
 release motor just sets the motor current to zero
+mc_interface_lock disables motor control commands, mc_interface_unlock enables them again
+	this disables motor control commands, it does not seem to stop the motor
 
 Talon srx structs
 /* encoder/decoders */
