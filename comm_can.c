@@ -241,9 +241,19 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 						}
 						break;
 
-					case CAN_PACKET_CONFIG: // some can message for adjusting the configuration of the vesc
+					case CAN_PACKET_CONFIG: { // some can message for adjusting the configuration of the vesc
+						custom_config_data tmp;
+						memcpy(&tmp, rxmsg.data8, sizeof(tmp));
+						switch (tmp.config_enum) {
+							case RESET_WATT_HOURS:
+								mc_interface_get_watt_hours(true);
+								break;
 
-						break;
+							default:
+								break;
+						}
+
+						} break;
 
 					case CAN_PACKET_CONTROL: { // it is easier for me to change the contents of a can message than the id
 						custom_control_data tmp;

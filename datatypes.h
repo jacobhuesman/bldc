@@ -450,6 +450,18 @@ typedef struct custom_control_data {
 	unsigned control_mode:4;
 } custom_control_data;
 
+typedef enum {
+	RESET_WATT_HOURS = 0,
+} CONFIG_FIELD;
+
+typedef struct custom_config_data {
+	union {
+		float setpointf;
+		int setpointi;
+	};
+	uint8_t config_enum;
+} custom_config_data;
+
 // Logged fault data
 typedef struct {
 	mc_fault_code fault;
