@@ -125,7 +125,7 @@ static THD_FUNCTION(can_status4, arg) {
 	}
 }
 
-static THD_FUNCTION(custom_control, arg) {
+static THD_FUNCTION(custom_control, arg) { // this is where you put your own control loop
 	(void)arg;
 	chRegSetThreadName("CUSTOM_CONTROL");
 	for(;;) {
