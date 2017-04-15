@@ -1,3 +1,19 @@
+R1 is a 10k NTC thermistor
+	one batch has 1k thermistors instead
+	firmware has been patched to deal with this
+	use:
+		make ONE_K_THERM=1
+
+modifications:
+	R401 is the CAN terminator, remove
+	disable hall effect low pass filter when using with encoder
+		remove C5,6,7 R11,12,13 
+		bridge R10,9,8
+		don't touch R7 and C4
+			these are for the motor temperature
+
+	
+
 needed features
 	command motor setpoint
 	closed loop output
