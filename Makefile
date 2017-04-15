@@ -10,6 +10,11 @@ ifeq ($(USE_OPT),)
   USE_OPT += -fsingle-precision-constant -Wdouble-promotion
 endif
 
+ifeq ($(ONE_K_THERM),1)
+  # for vescs with 1k thermistor
+  USE_OPT += -DONE_K_THERMISTOR
+endif
+
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
   USE_COPT = 
