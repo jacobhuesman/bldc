@@ -64,7 +64,7 @@
 #define ADC_IND_TEMP_MOS3			5
 #define ADC_IND_TEMP_MOS4			5
 #define ADC_IND_TEMP_MOS5			5
-#define ADC_IND_TEMP_MOS6			5
+#define ADC_IND_TEMP_MOS6			11
 #define ADC_IND_TEMP_PCB			5
 #define ADC_IND_VREFINT				6
 #define ADC_IND_TEMP_MOTOR			11
