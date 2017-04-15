@@ -66,6 +66,7 @@ typedef struct VESC_status4 { // 29bits
 	unsigned tempPCB:12;
 	unsigned faultCode:3;
 	unsigned state:2;
+	unsigned encoderIndex:1;
 } VESC_status4;
 
 static THD_FUNCTION(can_status1, arg) {
@@ -120,6 +121,7 @@ static THD_FUNCTION(can_status4, arg) {
 		status4.tempPCB = ADC_Value[ADC_IND_TEMP_PCB];
 		status4.faultCode = mc_interface_get_fault();
 		status4.state = mc_interface_get_state();
+		status4.encoderIndex = encoder_index_found();
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS4 << 8), (uint8_t*) &status4, sizeof(VESC_status4));
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
 	}
