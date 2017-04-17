@@ -132,7 +132,7 @@ static THD_FUNCTION(custom_control, arg) { // this is where you put your own con
 	chRegSetThreadName("CUSTOM_CONTROL");
 	for(;;) {
 
-		commands_printf("%f", custom_setpoint);
+		//commands_printf("%f", custom_setpoint);
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
 	}
 }
