@@ -1057,6 +1057,7 @@ void mc_interface_adc_inj_int_handler(void) {
  */
 static void update_override_limits(volatile mc_configuration *conf) {
 	const float temp = NTC_TEMP(ADC_IND_TEMP_MOS2);
+	const float motortemp = NTC_TEMP_GND(ADC_IND_TEMP_MOTOR);
 	const float v_in = GET_INPUT_VOLTAGE();
 
 	// Temperature
@@ -1074,6 +1075,31 @@ static void update_override_limits(volatile mc_configuration *conf) {
 		}
 
 		maxc = utils_map(temp, conf->l_temp_fet_start, conf->l_temp_fet_end, maxc, 0.0);
+
+		if (fabsf(conf->l_current_max) > maxc) {
+			conf->lo_current_max = SIGN(conf->l_current_max) * maxc;
+		}
+
+		if (fabsf(conf->l_current_min) > maxc) {
+			conf->lo_current_min = SIGN(conf->l_current_min) * maxc;
+		}
+	}
+
+	// motor Temperature
+	if (motortemp < conf->l_temp_motor_start) {
+		conf->lo_current_min = conf->l_current_min;
+		conf->lo_current_max = conf->l_current_max;
+	} else if (motortemp > conf->l_temp_motor_end) {
+		conf->lo_current_min = 0.0;
+		conf->lo_current_max = 0.0;
+		mc_interface_fault_stop(FAULT_CODE_OVER_TEMP_MOTOR);
+	} else {
+		float maxc = fabsf(conf->l_current_max);
+		if (fabsf(conf->l_current_min) > maxc) {
+			maxc = fabsf(conf->l_current_min);
+		}
+
+		maxc = utils_map(motortemp, conf->l_temp_motor_start, conf->l_temp_motor_end, maxc, 0.0);
 
 		if (fabsf(conf->l_current_max) > maxc) {
 			conf->lo_current_max = SIGN(conf->l_current_max) * maxc;
