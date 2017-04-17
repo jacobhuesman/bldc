@@ -167,7 +167,7 @@ void commands_process_packet(unsigned char *data, unsigned int len) {
 		buffer_append_float16(send_buffer, NTC_TEMP(ADC_IND_TEMP_MOS3), 1e1, &ind);
 		buffer_append_float16(send_buffer, NTC_TEMP(ADC_IND_TEMP_MOS4), 1e1, &ind);
 		buffer_append_float16(send_buffer, NTC_TEMP(ADC_IND_TEMP_MOS5), 1e1, &ind);
-		buffer_append_float16(send_buffer, NTC_TEMP(ADC_IND_TEMP_MOS6), 1e1, &ind);
+		buffer_append_float16(send_buffer, NTC_TEMP_GND(ADC_IND_TEMP_MOS6), 1e1, &ind);
 		buffer_append_float16(send_buffer, NTC_TEMP(ADC_IND_TEMP_PCB), 1e1, &ind);
 		buffer_append_float32(send_buffer, mc_interface_read_reset_avg_motor_current(), 1e2, &ind);
 		buffer_append_float32(send_buffer, mc_interface_read_reset_avg_input_current(), 1e2, &ind);
