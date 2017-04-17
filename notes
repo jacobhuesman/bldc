@@ -1,5 +1,5 @@
 R1 is a 10k NTC thermistor
-	one batch has 1k thermistors instead
+	one batch of vescs has 1k thermistors instead
 	firmware has been patched to deal with this
 	use:
 		make ONE_K_THERM=1
@@ -18,6 +18,8 @@ modifications:
 326.428 uH between two leads
 
 bldc mode: 70 integrator, 50 bemf coupling
+
+motor overtemp seems to hard lock bldc tool sometimes, replug vesc to fix
 
 needed features
 	command motor setpoint
