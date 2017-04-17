@@ -4,6 +4,8 @@ R1 is a 10k NTC thermistor
 	use:
 		make ONE_K_THERM=1
 
+flashing firmware via bldc tool keeps the vesc operating while the firmware is being uploaded. The vesc only goes down when it reboots into the new firmware
+
 modifications:
 	R401 is the CAN terminator, remove
 	disable hall effect low pass filter when using with encoder
@@ -12,7 +14,10 @@ modifications:
 		don't touch R7 and C4
 			these are for the motor temperature
 
-	
+0.52 ohms between two leads
+326.428 uH between two leads
+
+bldc mode: 70 integrator, 50 bemf coupling
 
 needed features
 	command motor setpoint
