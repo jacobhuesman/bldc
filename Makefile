@@ -15,6 +15,10 @@ ifeq ($(ONE_K_THERM),1)
   USE_OPT += -DONE_K_THERMISTOR
 endif
 
+ifeq ($(LIMIT_SWITCH),1)
+  USE_OPT += -DLIMIT_SWITCH
+endif
+
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
   USE_COPT = 
