@@ -9,7 +9,7 @@
 #include "app.h"
 #include "hw.h"
  
-// Example thread
+// TODO: figure out how much stack space is actually needed
 static THD_FUNCTION(can_status1, arg);
 static THD_WORKING_AREA(can_status1_wa, 2048); // 2kb stack for this thread
  
@@ -25,9 +25,17 @@ static THD_WORKING_AREA(can_status4_wa, 2048); // 2kb stack for this thread
 static THD_FUNCTION(custom_control, arg);
 static THD_WORKING_AREA(custom_control_wa, 2048); // 2kb stack for this thread
 
+#ifdef LIMIT_SWITCH
+static THD_FUNCTION(limit_switcher, arg);
+static THD_WORKING_AREA(limit_switcher_wa, 1024); // 1kb stack for this thread
+#endif
+
 void app_can_status_init(void) {
 	// Set the UART TX pin as an input with pulldown
-	//palSetPadMode(HW_UART_TX_PORT, HW_UART_TX_PIN, PAL_MODE_INPUT_PULLDOWN);
+	#ifdef LIMIT_SWITCH
+	palSetPadMode(HW_UART_TX_PORT, HW_UART_TX_PIN, PAL_MODE_INPUT_PULLUP);
+	palSetPadMode(HW_UART_RX_PORT, HW_UART_RX_PIN, PAL_MODE_INPUT_PULLUP);
+	#endif
  
 	// Start the example thread
 	chThdCreateStatic(can_status1_wa, sizeof(can_status1_wa),
@@ -41,6 +49,12 @@ void app_can_status_init(void) {
 
 	chThdCreateStatic(custom_control_wa, sizeof(custom_control_wa),
 		NORMALPRIO, custom_control, NULL);
+
+	
+#ifdef LIMIT_SWITCH
+	chThdCreateStatic(limit_switcher_wa, sizeof(limit_switcher_wa),
+		NORMALPRIO, limit_switcher, NULL);
+#endif
 }
  
 // most updated 100hz
@@ -132,7 +146,39 @@ static THD_FUNCTION(custom_control, arg) { // this is where you put your own con
 	chRegSetThreadName("CUSTOM_CONTROL");
 	for(;;) {
 
+		#ifdef LIMIT_SWITCH
+		if(mc_interface_get_for_lim()) commands_printf("tx pressed");
+		if(mc_interface_get_rev_lim()) commands_printf("rx pressed");
+		#endif
 		//commands_printf("%f", custom_setpoint);
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
 	}
 }
+
+#ifdef LIMIT_SWITCH
+static THD_FUNCTION(limit_switcher, arg) {
+	(void)arg;
+	chRegSetThreadName("LIMIT_SWITCHER");
+	int state = 0;
+	for(;;) {
+		switch(state) {
+			case 0:
+				if(mc_interface_get_for_lim() || mc_interface_get_rev_lim()) { // brake if one limit switch is pressed
+					mc_interface_set_brake_current(99);
+					state = 1;
+				}
+				break;
+
+			case 1:
+				if(!(mc_interface_get_for_lim() || mc_interface_get_rev_lim())) { // wait for limit switches to be released
+					state = 0;
+				}
+				break;
+
+			default:
+				break;
+		}
+		chThdSleepMilliseconds(100);
+	}
+}
+#endif
