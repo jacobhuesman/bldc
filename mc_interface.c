@@ -41,6 +41,7 @@ volatile uint16_t ADC_Value[HW_ADC_CHANNELS];
 volatile int ADC_curr_norm_value[3];
 
 float custom_setpoint;
+float limit_switch_brake_current = 99;
 
 // Private variables
 static volatile mc_configuration m_conf;
@@ -301,6 +302,19 @@ void mc_interface_set_duty(float dutyCycle) {
 		return;
 	}
 
+	#if LIMIT_SWITCH
+	if(mc_interface_get_for_lim() && dutyCycle > 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else if(mc_interface_get_rev_lim() && dutyCycle < 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else 
+	#endif
+
+	{
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
 	case MOTOR_TYPE_DC:
@@ -314,6 +328,7 @@ void mc_interface_set_duty(float dutyCycle) {
 	default:
 		break;
 	}
+	}
 }
 
 void mc_interface_set_duty_noramp(float dutyCycle) {
@@ -321,6 +336,19 @@ void mc_interface_set_duty_noramp(float dutyCycle) {
 		return;
 	}
 
+	#if LIMIT_SWITCH
+	if(mc_interface_get_for_lim() && dutyCycle > 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else if(mc_interface_get_rev_lim() && dutyCycle < 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else 
+	#endif
+	
+	{
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
 	case MOTOR_TYPE_DC:
@@ -334,12 +362,17 @@ void mc_interface_set_duty_noramp(float dutyCycle) {
 	default:
 		break;
 	}
+	}
 }
 
 void mc_interface_set_pid_speed(float rpm) {
 	if (mc_interface_try_input()) {
 		return;
 	}
+
+	#if LIMIT_SWITCH
+	if (mc_interface_check_limit_switch(rpm)) return;
+	#endif
 
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
@@ -361,6 +394,19 @@ void mc_interface_set_pid_pos(float pos) {
 		return;
 	}
 
+	#if LIMIT_SWITCH
+	if(mc_interface_get_for_lim() && pos > 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else if(mc_interface_get_rev_lim() && pos < 0) {
+		mc_interface_set_brake_current(limit_switch_brake_current);
+		return;
+	}
+	else
+	#endif
+
+	{
 	m_position_set = pos;
 
 	switch (m_conf.motor_type) {
@@ -376,12 +422,17 @@ void mc_interface_set_pid_pos(float pos) {
 	default:
 		break;
 	}
+	}
 }
 
 void mc_interface_set_current(float current) {
 	if (mc_interface_try_input()) {
 		return;
 	}
+
+	#if LIMIT_SWITCH
+	if (mc_interface_check_limit_switch(current)) return;
+	#endif
 
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
@@ -826,6 +877,22 @@ void mc_interface_sample_print_data(bool at_start, uint16_t len, uint8_t decimat
 		m_sample_ready = 0;
 	}
 }
+
+#if LIMIT_SWITCH
+bool mc_interface_get_for_lim(void) {
+	return !palReadPad(HW_UART_TX_PORT, HW_UART_TX_PIN);
+}
+
+bool mc_interface_get_rev_lim(void) {
+	return !palReadPad(HW_UART_RX_PORT, HW_UART_RX_PIN);
+}
+
+bool mc_interface_check_limit_switch(float value) { // check if ok to move, returns true if a limit is hit
+	if(mc_interface_get_for_lim() && (value > 0)) return true; //no forward movement if forward limit switch is pressed
+	if(mc_interface_get_rev_lim() && (value < 0)) return true;
+	return false;
+}
+#endif
 
 // MC implementation functions
 /**

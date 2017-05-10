@@ -70,6 +70,12 @@ float mc_interface_get_pid_pos_now(void);
 float mc_interface_get_last_sample_adc_isr_duration(void);
 void mc_interface_sample_print_data(bool at_start, uint16_t len, uint8_t decimation);
 
+#if LIMIT_SWITCH
+bool mc_interface_get_for_lim(void);
+bool mc_interface_get_rev_lim(void);
+bool mc_interface_check_limit_switch(float value);
+#endif
+
 // MC implementation functions
 void mc_interface_fault_stop(mc_fault_code fault);
 int mc_interface_try_input(void);
@@ -83,6 +89,7 @@ extern volatile uint16_t ADC_Value[];
 extern volatile int ADC_curr_norm_value[];
 
 extern float custom_setpoint;
+extern float limit_switch_brake_current;
 // Common fixed parameters
 #define MCPWM_DEAD_TIME_CYCLES			60		// Dead time
 
