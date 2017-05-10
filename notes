@@ -1,3 +1,8 @@
+add limit switch by disabling movement like timeout.c
+	needs to be able to allow movement in non limited direction, timeout.c does not do this
+	modify the mc_interface setters to block on limit switch
+	main motor spinning code is triggered periodically with timer interrupt that is called at the switching frequency
+
 R1 is a 10k NTC thermistor
 	one batch of vescs has 1k thermistors instead
 	firmware has been patched to deal with this
