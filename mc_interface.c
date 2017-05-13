@@ -303,18 +303,9 @@ void mc_interface_set_duty(float dutyCycle) {
 	}
 
 	#if LIMIT_SWITCH
-	if(mc_interface_get_for_lim() && dutyCycle > 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else if(mc_interface_get_rev_lim() && dutyCycle < 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else 
+	if (mc_interface_check_limit_switch(dutyCycle)) return;
 	#endif
 
-	{
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
 	case MOTOR_TYPE_DC:
@@ -328,7 +319,6 @@ void mc_interface_set_duty(float dutyCycle) {
 	default:
 		break;
 	}
-	}
 }
 
 void mc_interface_set_duty_noramp(float dutyCycle) {
@@ -337,18 +327,9 @@ void mc_interface_set_duty_noramp(float dutyCycle) {
 	}
 
 	#if LIMIT_SWITCH
-	if(mc_interface_get_for_lim() && dutyCycle > 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else if(mc_interface_get_rev_lim() && dutyCycle < 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else 
+	if (mc_interface_check_limit_switch(dutyCycle)) return;
 	#endif
 	
-	{
 	switch (m_conf.motor_type) {
 	case MOTOR_TYPE_BLDC:
 	case MOTOR_TYPE_DC:
@@ -361,7 +342,6 @@ void mc_interface_set_duty_noramp(float dutyCycle) {
 
 	default:
 		break;
-	}
 	}
 }
 
@@ -395,18 +375,9 @@ void mc_interface_set_pid_pos(float pos) {
 	}
 
 	#if LIMIT_SWITCH
-	if(mc_interface_get_for_lim() && pos > 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else if(mc_interface_get_rev_lim() && pos < 0) {
-		mc_interface_set_brake_current(limit_switch_brake_current);
-		return;
-	}
-	else
+	if (mc_interface_check_limit_switch(pos)) return;
 	#endif
 
-	{
 	m_position_set = pos;
 
 	switch (m_conf.motor_type) {
@@ -421,7 +392,6 @@ void mc_interface_set_pid_pos(float pos) {
 
 	default:
 		break;
-	}
 	}
 }
 
