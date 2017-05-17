@@ -19,6 +19,10 @@ modifications:
 		don't touch R7 and C4
 			these are for the motor temperature
 
+for wheel vescs
+	encoder leads are 5.5 in long
+	temp leads are 1 inch shorter than encoder leads
+
 0.52 ohms between two leads
 326.428 uH between two leads
 
