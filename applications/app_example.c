@@ -30,6 +30,8 @@ static THD_FUNCTION(limit_switcher, arg);
 static THD_WORKING_AREA(limit_switcher_wa, 1024); // 1kb stack for this thread
 #endif
 
+static volatile mc_configuration *m_conf;
+
 void app_can_status_init(void) {
 	// Set the UART TX pin as an input with pulldown
 	#ifdef LIMIT_SWITCH
@@ -49,6 +51,8 @@ void app_can_status_init(void) {
 
 	chThdCreateStatic(custom_control_wa, sizeof(custom_control_wa),
 		NORMALPRIO, custom_control, NULL);
+
+	m_conf = mc_interface_get_configuration();
 
 	
 #ifdef LIMIT_SWITCH
@@ -144,11 +148,27 @@ static THD_FUNCTION(can_status4, arg) {
 static THD_FUNCTION(custom_control, arg) { // this is where you put your own control loop
 	(void)arg;
 	chRegSetThreadName("CUSTOM_CONTROL");
+	int error = 0;
+	float output = 0;
 	for(;;) {
 
 		#ifdef LIMIT_SWITCH
-		if(mc_interface_get_for_lim()) commands_printf("tx pressed");
-		if(mc_interface_get_rev_lim()) commands_printf("rx pressed");
+		// green: rev
+		// blue: for
+		//if(mc_interface_get_for_lim()) commands_printf("tx pressed");
+		if(mc_interface_get_rev_lim()) {
+			//commands_printf("rx pressed");
+			mc_interface_get_tachometer_value(true);
+		}
+		error = custom_setpoint - mc_interface_get_tachometer_value(false);
+		if(abs(error) < m_conf.cus_ticks_close_enough) output = 0; //stop when close enough
+		else if (abs(error) < m_conf.cus_ticks_to_approach) { // slow down when close
+			output = copysign(m_conf.cus_slow_output, error);;
+		} else { // full speed ahead
+			output = copysign(1.0, error);
+		}
+		mc_interface_set_duty(output * m_conf.l_max_duty);
+		
 		#endif
 		//commands_printf("%f", custom_setpoint);
 		chThdSleepMilliseconds(100); // Run this loop at 10Hz
@@ -164,7 +184,7 @@ static THD_FUNCTION(limit_switcher, arg) {
 		switch(state) {
 			case 0:
 				if(mc_interface_get_for_lim() || mc_interface_get_rev_lim()) { // brake if one limit switch is pressed
-					mc_interface_set_brake_current(99);
+					mc_interface_brake_now();
 					state = 1;
 				}
 				break;
@@ -182,3 +202,4 @@ static THD_FUNCTION(limit_switcher, arg) {
 	}
 }
 #endif
+

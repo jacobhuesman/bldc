@@ -249,6 +249,20 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 								mc_interface_get_watt_hours(true);
 								break;
 
+							case RESET_TACHOMETER:
+								mc_interface_get_tachometer_value(true);
+								break;
+
+							case SET_CUS_CLOSE:
+								
+								break;
+
+							case SET_CUS_SLOW:
+								break;
+
+							case SET_CUS_APPROACH:
+								break;
+
 							default:
 								break;
 						}

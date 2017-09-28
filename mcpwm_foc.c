@@ -1658,10 +1658,10 @@ void mcpwm_foc_adc_inj_int_handler(void) {
 		m_pos_pid_now = angle_now;
 	} else {
 		static float angle_last = 0.0;
-		float diff_f = utils_angle_difference(angle_now, angle_last);
+		float diff_f = angle_now - angle_last;// utils_angle_difference(angle_now, angle_last);
 		angle_last = angle_now;
 		m_pos_pid_now += diff_f / m_conf->p_pid_ang_div;
-		utils_norm_angle((float*)&m_pos_pid_now);
+		//utils_norm_angle((float*)&m_pos_pid_now);
 	}
 
 	// Run position control
@@ -2053,7 +2053,8 @@ static void run_pid_control_pos(float angle_now, float angle_set, float dt) {
 	}
 
 	// Compute parameters
-	float error = utils_angle_difference(angle_set, angle_now);
+	//float error = utils_angle_difference(angle_set, angle_now);
+	float error = angle_set - angle_now;
 
 	if (encoder_is_configured()) {
 		if (m_conf->foc_encoder_inverted) {

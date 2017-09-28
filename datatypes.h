@@ -18,7 +18,7 @@
 /*
  * datatypes.h
  *
- *  Created on: 14 sep 2014
+ *  Creted on: 14 sep 2014
  *      Author: benjamin
  */
 
@@ -203,6 +203,10 @@ typedef struct {
 	float m_current_backoff_gain;
 	uint32_t m_encoder_counts;
 	sensor_port_mode m_sensor_port_mode;
+
+	float cus_slow_output;
+	int32_t cus_ticks_to_approach;
+	int32_t cus_ticks_close_enough;
 } mc_configuration;
 
 // Applications to use
@@ -452,6 +456,10 @@ typedef struct custom_control_data {
 
 typedef enum {
 	RESET_WATT_HOURS = 0,
+	RESET_TACHOMETER,
+	SET_CUS_CLOSE,
+	SET_CUS_SLOW,
+	SET_CUS_APPROACH
 } CONFIG_FIELD;
 
 typedef struct custom_config_data {
