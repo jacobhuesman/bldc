@@ -3,3 +3,4 @@
 build
 .dep
 *.swp
+compile_commands.json
