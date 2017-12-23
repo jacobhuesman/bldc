@@ -156,18 +156,18 @@ static THD_FUNCTION(custom_control, arg) { // this is where you put your own con
 		// green: rev
 		// blue: for
 		//if(mc_interface_get_for_lim()) commands_printf("tx pressed");
-		if(mc_interface_get_rev_lim()) {
-			//commands_printf("rx pressed");
-			mc_interface_get_tachometer_value(true);
-		}
-		error = custom_setpoint - mc_interface_get_tachometer_value(false);
-		if(abs(error) < m_conf.cus_ticks_close_enough) output = 0; //stop when close enough
-		else if (abs(error) < m_conf.cus_ticks_to_approach) { // slow down when close
-			output = copysign(m_conf.cus_slow_output, error);;
-		} else { // full speed ahead
-			output = copysign(1.0, error);
-		}
-		mc_interface_set_duty(output * m_conf.l_max_duty);
+		//if(mc_interface_get_rev_lim()) {
+		//	//commands_printf("rx pressed");
+		//	mc_interface_get_tachometer_value(true);
+		//}
+		//error = custom_setpoint - mc_interface_get_tachometer_value(false);
+		//if(abs(error) < m_conf.cus_ticks_close_enough) output = 0; //stop when close enough
+		//else if (abs(error) < m_conf.cus_ticks_to_approach) { // slow down when close
+		//	output = copysign(m_conf.cus_slow_output, error);;
+		//} else { // full speed ahead
+		//	output = copysign(1.0, error);
+		//}
+		//mc_interface_set_duty(output * m_conf.l_max_duty);
 		
 		#endif
 		//commands_printf("%f", custom_setpoint);
