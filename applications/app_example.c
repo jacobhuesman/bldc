@@ -71,7 +71,10 @@ typedef struct VESC_status1 { // 64bits
 // slightly less updated 50hz
 typedef struct VESC_status2 { // 32bits
 	int tachometer:32;
-} VESC_status2;
+	unsigned adc:12;
+	unsigned flimit:1;
+	unsigned rlimit:1;
+}__attribute__((packed)) VESC_status2;
 
 // even less updated 10hz
 typedef struct VESC_status3 { // 60bits
@@ -113,6 +116,11 @@ static THD_FUNCTION(can_status2, arg) {
 	for(;;) {
 		VESC_status2 status2;
 		status2.tachometer = mc_interface_get_tachometer_value(false);
+		status2.adc = ADC_Value[ADC_IND_EXT];
+	#ifdef LIMIT_SWITCH
+		status2.flimit = mc_interface_get_for_lim();
+		status2.rlimit = mc_interface_get_rev_lim();
+#endif
 		comm_can_transmit(app_get_configuration()->controller_id |  (CAN_PACKET_STATUS2 << 8), (uint8_t*) &status2, sizeof(VESC_status2));
 		chThdSleepMilliseconds(20); // Run this loop at 50Hz
 	}
