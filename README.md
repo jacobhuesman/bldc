@@ -1,4 +1,19 @@
 Vedder's open source bldc controller firmware with modifications mostly related to CAN bus communication.
+
+## Environment Setup
+```
+sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
+sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
+sudo apt-get update
+sudo apt-get install gcc-arm-embedded
+sudo apt-get install build-essential qt-sdk openocd git libudev-dev libqt5serialport5-dev
+sudo adduser $USER dialout
+sudo apt-get remove modemmanager
+wget vedder.se/Temp/49-stlinkv2.rules
+sudo mv 49-stlinkv2.rules /etc/udev/rules.d/
+sudo reload udev
+```
+
 ## Compile options
 
 Enable limit switch support. Connect limit switch to TX and RX pins on the P3 header on the Vesc.
