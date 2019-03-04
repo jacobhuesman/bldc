@@ -43,6 +43,10 @@ volatile int ADC_curr_norm_value[3];
 float custom_setpoint;
 float limit_switch_brake_current = 99;
 
+#if LIMIT_SWITCH
+volatile float max_configured_current;
+#endif
+
 // Private variables
 static volatile mc_configuration m_conf;
 static mc_fault_code m_fault_now;
@@ -135,6 +139,10 @@ void mc_interface_init(mc_configuration *configuration) {
 		default:
 			break;
 	}
+#endif
+
+#if LIMIT_SWITCH
+	max_configured_current = m_conf.lo_current_max;
 #endif
 
 	// Initialize selected implementation
@@ -303,7 +311,25 @@ void mc_interface_set_duty(float dutyCycle) {
 	}
 
 	#if LIMIT_SWITCH
-	if (mc_interface_check_limit_switch(dutyCycle)) return;
+	//if (mc_interface_check_limit_switch(dutyCycle)) return;
+	const float slow_duty_cycle = 0.1;
+	const float low_current = 1.0;
+	if (mc_interface_check_limit_switch(dutyCycle))
+	{
+		if (dutyCycle > slow_duty_cycle)
+		{
+			dutyCycle = slow_duty_cycle;
+		}
+		else if (dutyCycle < -slow_duty_cycle)
+		{
+			dutyCycle = -slow_duty_cycle;
+		}
+		m_conf.lo_current_max = low_current;
+	}
+	else
+	{
+		m_conf.lo_current_max = max_configured_current;
+	}
 	#endif
 
 	switch (m_conf.motor_type) {
