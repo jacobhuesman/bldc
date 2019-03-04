@@ -1,5 +1,14 @@
 Vedder's open source bldc controller firmware with modifications mostly related to CAN bus communication.
 
+## ABI Encoder Hookup
+```
+A -> Hall 1
+B -> Hall 2
+I -> Hall 3
+
+```
+
+
 ## Environment Setup
 ```
 sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
