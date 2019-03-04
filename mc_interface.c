@@ -312,8 +312,8 @@ void mc_interface_set_duty(float dutyCycle) {
 
 	#if LIMIT_SWITCH
 	//if (mc_interface_check_limit_switch(dutyCycle)) return;
-	const float slow_duty_cycle = 0.1;
-	const float low_current = 1.0;
+	const float slow_duty_cycle = 0.05;
+	const float low_current = 2.0;
 	if (mc_interface_check_limit_switch(dutyCycle))
 	{
 		if (dutyCycle > slow_duty_cycle)
@@ -324,10 +324,12 @@ void mc_interface_set_duty(float dutyCycle) {
 		{
 			dutyCycle = -slow_duty_cycle;
 		}
+		m_conf.l_current_max = low_current;
 		m_conf.lo_current_max = low_current;
 	}
 	else
 	{
+		m_conf.l_current_max = max_configured_current;
 		m_conf.lo_current_max = max_configured_current;
 	}
 	#endif

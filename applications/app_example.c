@@ -192,7 +192,8 @@ static THD_FUNCTION(limit_switcher, arg) {
 		switch(state) {
 			case 0:
 				if(mc_interface_get_for_lim() || mc_interface_get_rev_lim()) { // brake if one limit switch is pressed
-					mc_interface_brake_now();
+					//mc_interface_brake_now();
+					mc_interface_set_duty(mc_interface_get_duty_cycle_set());
 					state = 1;
 				}
 				break;
