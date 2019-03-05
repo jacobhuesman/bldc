@@ -8,6 +8,7 @@
 #include "comm_can.h"
 #include "app.h"
 #include "hw.h"
+#include "stdint.h"
  
 // TODO: figure out how much stack space is actually needed
 static THD_FUNCTION(can_status1, arg);
@@ -188,26 +189,89 @@ static THD_FUNCTION(limit_switcher, arg) {
 	(void)arg;
 	chRegSetThreadName("LIMIT_SWITCHER");
 	int state = 0;
-	for(;;) {
-		switch(state) {
+	int position = INT32_MIN;
+	int last_tach_value = 0;
+	int tach_equal_count = 0;
+	int lim_count = 0;
+	for(;;)
+	{
+		// Get current values
+		int tach_value = mc_interface_get_tachometer_value(false);
+		float current_duty = mc_interface_get_duty_cycle_set();
+		bool top_limit = mc_interface_get_for_lim();
+		bool bot_limit = mc_interface_get_rev_lim();
+
+		// See if we're in the same position as last time
+		if (tach_value == last_tach_value)
+		{
+			tach_equal_count++;
+			if (tach_equal_count > 1e6)
+			{
+				tach_equal_count = 1e6;
+			}
+		}
+		else
+		{
+			tach_equal_count = 0;
+		}
+
+		// State machine
+		switch(state)
+		{
+			// No limit switches active
 			case 0:
-				if(mc_interface_get_for_lim() || mc_interface_get_rev_lim()) { // brake if one limit switch is pressed
-					//mc_interface_brake_now();
-					mc_interface_set_duty(mc_interface_get_duty_cycle_set());
+				if(top_limit || bot_limit)
+				{
+					// Make sure duty is updated
+					mc_interface_set_duty(current_duty);
 					state = 1;
+					lim_count++;
 				}
 				break;
-
+			// Limit switch active
 			case 1:
-				if(!(mc_interface_get_for_lim() || mc_interface_get_rev_lim())) { // wait for limit switches to be released
+				// Check for limit switches to be released
+				if(!(top_limit || bot_limit))
+				{
 					state = 0;
+					lim_count = 0;
+				}
+				else
+				{
+					lim_count++;
+				}
+				// If we're bottomed out
+				if (bot_limit && tach_equal_count >= 10)
+				{
+					position = 0;
+					if (current_duty < 0.0f)
+					{
+						commands_printf("Bottomed out", tach_equal_count);
+						mc_interface_set_duty(0.0f);
+					}
+					tach_value = mc_interface_get_tachometer_value(true);
+				}
+				// If we're at the top
+				if (top_limit && tach_equal_count >= 10)
+				{
+					// position = 0; TODO set position to max value?
+					if (current_duty > 0.0f)
+					{
+						commands_printf("At the top", tach_equal_count);
+						mc_interface_set_duty(0.0f);
+					}
 				}
 				break;
-
 			default:
 				break;
 		}
-		chThdSleepMilliseconds(100);
+		if (position != INT32_MIN)
+		{
+			position = tach_value;
+		}
+		last_tach_value = tach_value;
+		commands_printf("Top: %i, Bot: %i, Lim Count: %i, Pos: %i, Tach: %i, Duty: %f", top_limit, bot_limit, lim_count, position, tach_value, current_duty);
+		chThdSleepMilliseconds(50);
 	}
 }
 #endif
