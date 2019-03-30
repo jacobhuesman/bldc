@@ -117,7 +117,7 @@ static THD_FUNCTION(can_status2, arg) {
 		VESC_status2 status2;
 		status2.tachometer = mc_interface_get_tachometer_value(false);
 		status2.adc = ADC_Value[ADC_IND_EXT];
-	#ifdef LIMIT_SWITCH
+#ifdef LIMIT_SWITCH
 		status2.flimit = mc_interface_get_for_lim();
 		status2.rlimit = mc_interface_get_rev_lim();
 #endif
@@ -153,33 +153,124 @@ static THD_FUNCTION(can_status4, arg) {
 	}
 }
 
+/*
+ * Notes:
+ *  - ADC_Value[ADC_IND_EXT] array updates at 20kHz.
+ *
+ */
+typedef enum
+{
+	SHOULDER_OFF = 0,
+	SHOULDER_NORMAL,
+	SHOULDER_BOTTOM_LIMIT,
+	SHOULDER_NEAR_BOTTOM_LIMIT,
+	SHOULDER_DIGGING,
+	SHOULDER_NEAR_BACKHOE_DUMP_POINT,
+	SHOULDER_NEAR_BUCKET_DUMP_POINT,
+	SHOULDER_NEAR_TOP_LIMIT,
+	SHOULDER_TOP_LIMIT
+} shoulder_state;
+
+#define SHOULDER_BOTTOM_LIMIT_ANGLE                40u
+#define SHOULDER_DIGGING_BOTTOM_ANGLE             150u
+#define SHOULDER_DIGGING_TOP_ANGLE                950u
+#define SHOULDER_ZERO_ANGLE                      1444u
+#define SHOULDER_BACKHOE_DUMP_BOTTOM_ANGLE       2250u
+#define SHOULDER_BACKHOE_DUMP_POINT              2350u
+#define SHOULDER_BACKHOE_DUMP_TOP_ANGLE          2450u
+#define SHOULDER_BUCKET_DUMP_BOTTOM_ANGLE        3100u
+#define SHOULDER_BUCKET_DUMP_POINT               3250u
+#define SHOULDER_TOP_LIMIT_ANGLE                 3268u
+
+#define SHOULDER_MAX_DUTY 0.40f
+#define SHOULDER_SLOW_DUTY 0.05f
+
+float clamp(float value, float low, float high)
+{
+	return (value < low) ? low : (high < value) ? high : value;
+}
 static THD_FUNCTION(custom_control, arg) { // this is where you put your own control loop
 	(void)arg;
 	chRegSetThreadName("CUSTOM_CONTROL");
-	int error = 0;
-	float output = 0;
-	for(;;) {
 
-		#ifdef LIMIT_SWITCH
-		// green: rev
-		// blue: for
-		//if(mc_interface_get_for_lim()) commands_printf("tx pressed");
-		//if(mc_interface_get_rev_lim()) {
-		//	//commands_printf("rx pressed");
-		//	mc_interface_get_tachometer_value(true);
-		//}
-		//error = custom_setpoint - mc_interface_get_tachometer_value(false);
-		//if(abs(error) < m_conf.cus_ticks_close_enough) output = 0; //stop when close enough
-		//else if (abs(error) < m_conf.cus_ticks_to_approach) { // slow down when close
-		//	output = copysign(m_conf.cus_slow_output, error);;
-		//} else { // full speed ahead
-		//	output = copysign(1.0, error);
-		//}
-		//mc_interface_set_duty(output * m_conf.l_max_duty);
-		
-		#endif
-		//commands_printf("%f", custom_setpoint);
-		chThdSleepMilliseconds(100); // Run this loop at 10Hz
+	custom_setpoint = 0.0f;
+	custom_control_active = false;
+	float setpoint = 0.0f;  // Position
+	uint16_t shoulder_position = 0;
+	int state = SHOULDER_NORMAL;
+	bool top_limit = mc_interface_get_for_lim();
+	bool bottom_limit = mc_interface_get_rev_lim();
+
+	for (;;)
+	{
+		chThdSleepMilliseconds(200);
+
+		// Update values
+		top_limit = mc_interface_get_rev_lim();
+		bottom_limit = mc_interface_get_for_lim();
+		setpoint = custom_setpoint;
+		shoulder_position = ADC_Value[ADC_IND_EXT];
+		//commands_printf("%i, %i", top_limit, bottom_limit);
+
+		// Only execute if active
+		if (!custom_control_active)
+		{
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: OFF", shoulder_position, setpoint);
+			state = SHOULDER_OFF;
+			continue;
+		}
+		// Update state
+		// At limit switch
+		if (top_limit || shoulder_position >= SHOULDER_TOP_LIMIT_ANGLE)
+		{
+			setpoint = clamp(setpoint, 0.0f, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: TOP_LIMIT", shoulder_position, setpoint);
+			state = SHOULDER_TOP_LIMIT;
+		}
+		else if (bottom_limit || shoulder_position <= SHOULDER_BOTTOM_LIMIT_ANGLE)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_MAX_DUTY, 0.0f);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: BOTTOM_LIMIT", shoulder_position, setpoint);
+			state = SHOULDER_BOTTOM_LIMIT;
+		}
+		// Near limit switch
+		else if (shoulder_position > SHOULDER_BOTTOM_LIMIT_ANGLE && shoulder_position <= SHOULDER_DIGGING_BOTTOM_ANGLE)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_MAX_DUTY, SHOULDER_SLOW_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: NEAR_BOTTOM_LIMIT", shoulder_position, setpoint);
+			state = SHOULDER_NEAR_BOTTOM_LIMIT;
+		}
+		else if (shoulder_position > SHOULDER_DIGGING_BOTTOM_ANGLE && shoulder_position <= SHOULDER_DIGGING_TOP_ANGLE)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_MAX_DUTY, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: DIGGING", shoulder_position, setpoint);
+			state = SHOULDER_DIGGING;
+		}
+		else if (shoulder_position > SHOULDER_BACKHOE_DUMP_BOTTOM_ANGLE && shoulder_position <= SHOULDER_BACKHOE_DUMP_TOP_ANGLE)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_SLOW_DUTY, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: NEAR_BACKHOE_DUMP_POINT", shoulder_position, setpoint);
+			state = SHOULDER_NEAR_BACKHOE_DUMP_POINT;
+		}
+		else if (shoulder_position > SHOULDER_BUCKET_DUMP_BOTTOM_ANGLE && shoulder_position <= SHOULDER_BUCKET_DUMP_POINT)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_SLOW_DUTY, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: NEAR_BUCKET_DUMP_POINT", shoulder_position, setpoint);
+			state = SHOULDER_NEAR_BUCKET_DUMP_POINT;
+		}
+		else if (shoulder_position > SHOULDER_BUCKET_DUMP_POINT && shoulder_position <= SHOULDER_TOP_LIMIT_ANGLE)
+		{
+			setpoint = clamp(setpoint, -SHOULDER_SLOW_DUTY, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: NEAR_TOP_LIMIT", shoulder_position, setpoint);
+			state = SHOULDER_NEAR_TOP_LIMIT;
+		}
+		else
+		{
+			setpoint = clamp(setpoint, -SHOULDER_MAX_DUTY, SHOULDER_MAX_DUTY);
+			commands_printf("[SHOULDER] P: %4i, D: %6.4f S: NORMAL", shoulder_position, setpoint);
+			state = SHOULDER_NORMAL;
+		}
+		mc_interface_set_duty(setpoint);
 	}
 }
 

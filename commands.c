@@ -187,30 +187,36 @@ void commands_process_packet(unsigned char *data, unsigned int len) {
 
 	case COMM_SET_DUTY:
 		ind = 0;
-		mc_interface_set_duty((float)buffer_get_int32(data, &ind) / 100000.0);
+		//mc_interface_set_duty((float)buffer_get_int32(data, &ind) / 100000.0);
+		custom_control_active = true;
+		custom_setpoint = (float)buffer_get_int32(data, &ind) / 100000.0f;
 		timeout_reset();
 		break;
 
 	case COMM_SET_CURRENT:
 		ind = 0;
+		custom_control_active = false;
 		mc_interface_set_current((float)buffer_get_int32(data, &ind) / 1000.0);
 		timeout_reset();
 		break;
 
 	case COMM_SET_CURRENT_BRAKE:
 		ind = 0;
+		custom_control_active = false;
 		mc_interface_set_brake_current((float)buffer_get_int32(data, &ind) / 1000.0);
 		timeout_reset();
 		break;
 
 	case COMM_SET_RPM:
 		ind = 0;
-		mc_interface_set_pid_speed((float)buffer_get_int32(data, &ind));
+		custom_control_active = false;
+		//mc_interface_set_pid_speed((float)buffer_get_int32(data, &ind));
 		timeout_reset();
 		break;
 
 	case COMM_SET_POS:
 		ind = 0;
+		custom_control_active = false;
 		mc_interface_set_pid_pos((float)buffer_get_int32(data, &ind) / 1000000.0);
 		timeout_reset();
 		break;

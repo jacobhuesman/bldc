@@ -89,6 +89,7 @@ extern volatile uint16_t ADC_Value[];
 extern volatile int ADC_curr_norm_value[];
 
 extern float custom_setpoint;
+extern bool custom_control_active;
 extern float limit_switch_brake_current;
 // Common fixed parameters
 #define MCPWM_DEAD_TIME_CYCLES			60		// Dead time

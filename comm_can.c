@@ -274,27 +274,33 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 						memcpy(&tmp, rxmsg.data8, sizeof(tmp));
 						switch ( tmp.control_mode ) {
 							case CONTROL_MODE_DUTY:
+								custom_control_active = false;
 								mc_interface_set_duty(tmp.setpointf);
 								timeout_reset();
 								break;
 							case CONTROL_MODE_SPEED:
-								mc_interface_set_pid_speed(tmp.setpointf);
+								custom_control_active = false;
+								//mc_interface_set_pid_speed(tmp.setpointf);
 								timeout_reset();
 								break;
 							case CONTROL_MODE_CURRENT:
+								custom_control_active = false;
 								mc_interface_set_current(tmp.setpointf);
 								timeout_reset();
 								break;
 							case CONTROL_MODE_CURRENT_BRAKE:
+								custom_control_active = false;
 								mc_interface_set_brake_current(tmp.setpointf);
 								timeout_reset();
 								break;
 							case CONTROL_MODE_POS:
-								mc_interface_set_pid_pos(tmp.setpointf);
+								custom_control_active = false;
+								//mc_interface_set_pid_pos(tmp.setpointf);
 								timeout_reset();
 								break;
 
 							case CONTROL_MODE_CUSTOM:
+								custom_control_active = true;
 								//commands_printf("%f", (*(custom_control*)rxmsg.data8).setpointf);
 								//commands_printf("%f", tmp.setpointf);
 								custom_setpoint = tmp.setpointf;

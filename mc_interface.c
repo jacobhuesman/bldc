@@ -41,6 +41,7 @@ volatile uint16_t ADC_Value[HW_ADC_CHANNELS];
 volatile int ADC_curr_norm_value[3];
 
 float custom_setpoint;
+bool custom_control_active;
 float limit_switch_brake_current = 99;
 
 // Private variables
